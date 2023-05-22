@@ -1,6 +1,6 @@
 ###### Caldwell et al. - Main figures for "Protection efforts have resulted in ~10% of existing fish biomass on global coral reefs ####
 ######  Author: Iain R. Caldwell
-######  Date last revised: May 10, 2023
+######  Date last revised: May 18, 2023
 ######  Main figures for paper:
 ######    Fig 1. Realized gains
 ######      a. Cumulative biomass vs. % of sites for status quo and fished scenario
@@ -45,15 +45,14 @@ resultsDir <- paste0(getwd(), "/Caldwelletal_Results/")
 plotDir <- paste0(getwd(), "/Caldwelletal_Plots/")
 modelDir <- paste0(getwd(), "/Caldwelletal_Models/")
 
-######  Load predictions from "GlobalStatus_PredictCalcGainsSpaMM_20210219.R" code ####
-###Open RDS file with predictions, best model, and reef mask data (for supplementary figure)
-predictTBL <- readRDS(file = paste0(resultsDir, "Caldwelletal_RealizedPotentialGains_PredictionsFishBiomass_2023-05-15.rds")) #2599 obs of 4616 variables
+######  Load predictions ####
+predictTBL <- readRDS(file = paste0(resultsDir, "Caldwelletal_RealizedPotentialGains_PredictionsFishBiomass_2023-05-21.rds")) 
 
-#Get numbers for each protection type
+#Get numbers for each protection type (Table 1)
 manageSamples <- as.data.frame(table(predictTBL$Management))
 
 ######  Load list with best models ####
-bestSpammResTBL <- read_csv(paste0(resultsDir, "Caldwelletal_RealizedPotentialGains_BestSpammSummResWithFilenames_2023-05-15.csv")) #4 obs of 12 vars (models based on old data)
+bestSpammResTBL <- read_csv(paste0(resultsDir, "Caldwelletal_RealizedPotentialGains_BestSpammSummResWithFilenames_2023-05-21.csv")) 
 
 #get the number of best models
 numModels <- nrow(bestSpammResTBL)
@@ -219,9 +218,9 @@ Fig1a_CumBiomassVsPerSitesFishedStatusQuoRealGainsPlot <- ggplot(data = cumBioma
   annotate(geom = "text", x = 85, y = 48, label = "Fished scenario", color = "black")
 
 ######      > b. Realized gains given subsampled full protection ####
-# Create new dataset for figure with actual data and subsampled data (1000 subsamples) --> 2.8% would be 40 (Full), leaving 74 Partial
+# Create new dataset for figure with actual data and subsampled data (1000 subsamples) 
 #Get the percentages for the actual data
-realGainsFullMpaByPercFilename <- paste0(resultsDir, "RealizedGains_SubsampledByPercFullMPA_20221019.csv")
+realGainsFullMpaByPercFilename <- paste0(resultsDir, "RealizedGains_SubsampledByPercFullMPA.csv")
 
 if(file.exists(realGainsFullMpaByPercFilename)) {
   message("Realized gains already subsampled")
@@ -317,8 +316,6 @@ realGainsFullMpaByPercProtTBL <- realGainsFullMpaByPercProtTBL %>%
 #Get the closest percentage to the Allen Coral percentages (3.06%)
 closestPercAllenCoralProt <- realGainsFullMpaByPercProtTBL$PercFullMPA[which.min(abs(realGainsFullMpaByPercProtTBL$PercFullMPA - 3.06))] 
 
-tail(realGainsFullMpaByPercProtTBL)
-
 ###>> Fig 1b plot ####
 Fig1b_RealGainsSubsampleAllenCoralPercPlot <- ggplot(data = realGainsFullMpaByPercProtTBL,
                                                aes(x = PercFullMPA,
@@ -343,13 +340,10 @@ Fig1b_RealGainsSubsampleAllenCoralPercPlot <- ggplot(data = realGainsFullMpaByPe
                linetype = "dotted") +
   geom_errorbar(data = realGainsFullMpaByPercProtTBL %>% filter(PercFullMPA == closestPercAllenCoralProt)) +
   geom_point(data = realGainsFullMpaByPercProtTBL %>% filter(PercFullMPA == closestPercAllenCoralProt), size = 3, shape = 21, fill = "white") +
-  #geom_segment(x = 0, xend = 0, y = 0, yend = )
   scale_y_continuous(name = "Realized gains\n(% of total status quo biomass)",
-                     #limits = c(5,20),
                      expand = c(0,0)
   ) +
   scale_x_continuous(name = "% fully protected MPA coverage",
-                     #limits = c(0,26),
                      expand = c(0,0)) +
   theme_classic() +
   theme(aspect.ratio = 1) 
@@ -396,7 +390,6 @@ Fig1c_RealGainsMap_SizeLegendBelow <- ggplot() +
   theme(plot.subtitle = element_text(face = "italic"),
         panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(), 
-        #legend.box.spacing = unit(1, 'cm'),
         legend.position = "bottom",
         legend.key = element_rect(fill = NA),
         legend.margin = margin(0, 0, 0, 0),
@@ -550,8 +543,6 @@ wilcox.test(RealizedGains ~ Management,
               mutate(Management = ifelse(Management == "Restricted", "Restricted", "UnfishedHigh")),
             conf.int = T, correct = F)
 
-count_to_perc_trans <- function() trans_new("count_to_perc", function(x) x/3000, function(x) x/(nrow(bestSpammResTBL) * numSamples * nrow(predictTBL)))
-
 sumCounts <- nrow(bestSpammResTBL)*numSamples*nrow(predictTBL)
 
 freqBreaks <- c(0, 0.25*sumCounts, 0.5*sumCounts, 0.75*sumCounts)
@@ -594,7 +585,6 @@ Fig2a_RealizedGainsStackedDistByManagePlot <- ggplot() +
         panel.grid.minor = element_blank() ,
         panel.border = element_blank() ,
         panel.background = element_blank(),
-        #axis.text.y = element_blank(),
         axis.ticks.y = element_blank(),
         aspect.ratio = 1) 
 
@@ -829,16 +819,16 @@ colnames(cumRealizedGainsPercStatusQuoQuantilesTBL) <- c("CumRealizedGainsPercSt
 cumGainsTBL <- cumGainsTBL %>%
   bind_cols(cumPotentialGainsPercStatusQuoQuantilesTBL, cumRealizedGainsPercStatusQuoQuantilesTBL)
 
-tail(cumGainsTBL$CumRealizedGainsPercStatusQuo_50Quant[cumGainsTBL$Management %in% c("UnfishedHighBigOld", "UnfishedHighSmallNew")], n = 1) #13.0 of the 21% is from high compliance MPAs
-tail(cumGainsTBL$CumRealizedGainsPercStatusQuo_50Quant, n = 1) #20.0
-12.9/20.3 #64%
+tail(cumGainsTBL$CumRealizedGainsPercStatusQuo_50Quant, n = 1) #20.3% total realized gains
+tail(cumGainsTBL$CumRealizedGainsPercStatusQuo_50Quant[cumGainsTBL$Management %in% c("UnfishedHighBigOld", "UnfishedHighSmallNew")], n = 1) #12.9 of the 20.3% realized gains from high compliance fully protected MPAs
+12.9/20.3*100 #i.e., 64% of realized gains is from high compliance fully protected MPAs
 
 tail(cumGainsTBL$CumRealizedGainsPercStatusQuo_025Quant[cumGainsTBL$Management %in% c("UnfishedHighBigOld", "UnfishedHighSmallNew")], n = 1) #14.3
-tail(cumGainsTBL$CumRealizedGainsPercStatusQuo_975Quant[cumGainsTBL$Management %in% c("UnfishedHighBigOld", "UnfishedHighSmallNew")], n = 1) #12
+tail(cumGainsTBL$CumRealizedGainsPercStatusQuo_975Quant[cumGainsTBL$Management %in% c("UnfishedHighBigOld", "UnfishedHighSmallNew")], n = 1) #12.0
 
 tail(cumGainsTBL$CumPotentialGainsPercStatusQuo_50Quant, n = 1) #70.8
 tail(cumGainsTBL$CumPotentialGainsPercStatusQuo_025Quant, n = 1) #64.8
-tail(cumGainsTBL$CumPotentialGainsPercStatusQuo_975Quant, n = 1) #75
+tail(cumGainsTBL$CumPotentialGainsPercStatusQuo_975Quant, n = 1) #74.7
 
 
 #Calculate cumulative potential gains for randomly selected sites - to compare with ordered
@@ -848,7 +838,7 @@ highCompGainsTBL <- cumGainsTBL %>%
 noHighCompGainsTBL <- cumGainsTBL %>% 
   dplyr::filter(!Management %in% c("UnfishedHighSmallNew", "UnfishedHighBigOld"))
 
-randCumPotGainsFilename <- paste0(resultsDir, "RealizedGainsMS_RandomCumulativePotentialGains_20221019.rds")
+randCumPotGainsFilename <- paste0(resultsDir, "RealizedGainsMS_RandomCumulativePotentialGains.rds")
 if(file.exists(randCumPotGainsFilename)) {
   randCumPotentialGainsTBL <- readRDS(file = randCumPotGainsFilename)
 } else {
@@ -894,6 +884,10 @@ colnames(randCumPotentialGainsQuantilesTBL) <- c("RandCumPotGainsCompStatusQuo_0
 
 randCumPotentialGainsQuantilesTBL <- randCumPotentialGainsQuantilesTBL %>% 
   bind_cols(cumGainsTBL %>% select(PercentageSites))
+
+#Calculate the median and 95% quantiles for full protection scenario
+median(predictTBL$UnfishedHighBigOldBiomassMed) #804 kg/ha
+quantile(x = predictTBL$UnfishedHighBigOldBiomassMed, probs = c(0.025, 0.975)) #494 - 1647 kg/ha
 
 ##Find out the median and 95% quantiles for expected potential gains at ~30% high compliance
 #Get the percentage closest to 30%
