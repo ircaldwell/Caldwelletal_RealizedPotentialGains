@@ -1,6 +1,6 @@
 ###### Caldwell et al. - Main figures for "Protection efforts have resulted in ~10% of existing fish biomass on global coral reefs ####
 ######  Author: Iain R. Caldwell
-######  Date last revised: May 18, 2023
+######  Date last revised: May 23, 2023
 ######  Main figures for paper:
 ######    Fig 1. Realized gains
 ######      a. Cumulative biomass vs. % of sites for status quo and fished scenario
@@ -40,19 +40,19 @@ numSamples = 1000
 
 ####Set parameters and directories ####
 dateNum = as.character(Sys.Date())
-setwd('..')
-resultsDir <- paste0(getwd(), "/Caldwelletal_Results/")
-plotDir <- paste0(getwd(), "/Caldwelletal_Plots/")
-modelDir <- paste0(getwd(), "/Caldwelletal_Models/")
+rootDir <- paste0(getwd(), "/Caldwelletal_RealizedPotentialGains/")
+resultsDir <- paste0(rootDir, "Caldwelletal_Results/")
+plotDir <- paste0(rootDir, "Caldwelletal_Plots/")
+modelDir <- paste0(rootDir, "Caldwelletal_Models/")
 
 ######  Load predictions ####
-predictTBL <- readRDS(file = paste0(resultsDir, "Caldwelletal_RealizedPotentialGains_PredictionsFishBiomass_2023-05-21.rds")) 
+predictTBL <- read_csv(file = paste0(resultsDir, "Caldwelletal_RealizedPotentialGains_PredictionsFishBiomass_2023-05-23.csv")) 
 
 #Get numbers for each protection type (Table 1)
 manageSamples <- as.data.frame(table(predictTBL$Management))
 
 ######  Load list with best models ####
-bestSpammResTBL <- read_csv(paste0(resultsDir, "Caldwelletal_RealizedPotentialGains_BestSpammSummResWithFilenames_2023-05-21.csv")) 
+bestSpammResTBL <- read_csv(paste0(resultsDir, "Caldwelletal_RealizedPotentialGains_BestSpammSummResWithFilenames_2023-05-23.csv")) 
 
 #get the number of best models
 numModels <- nrow(bestSpammResTBL)
@@ -89,8 +89,8 @@ cumBiomassTBL <- predictTBL %>%
   arrange(desc(Management), desc(StatusQuoBiomassMed)) %>% 
   mutate(PercentageSites = c(1:nrow(predictTBL))/nrow(predictTBL)*100) 
 
-cumStatusQuoBiomassSamplesTBL <- data.frame(matrix(nrow = nrow(cumBiomassTBL), ncol = numSamples*numModels))
-cumFishedBiomassSamplesTBL <- data.frame(matrix(nrow = nrow(cumBiomassTBL), ncol = numSamples*numModels))
+cumStatusQuoBiomassSamplesTBL <- matrix(nrow = nrow(cumBiomassTBL), ncol = numSamples*numModels)
+cumFishedBiomassSamplesTBL <- matrix(nrow = nrow(cumBiomassTBL), ncol = numSamples*numModels)
 
 #Calculate the 95% quantiles and quartiles for the cumulative sums from the sample distributions
 modelNum = 1
@@ -109,15 +109,18 @@ for(modelNum in 1:numModels) {
   }
 }
 
-cumStatusQuoBiomassQuantilesTBL <- data.frame(matrix(nrow = nrow(cumBiomassTBL), ncol = 5))
-cumFishedBiomassQuantilesTBL <- data.frame(matrix(nrow = nrow(cumBiomassTBL), ncol = 5))
+cumStatusQuoBiomassQuantilesTBL <- matrix(nrow = nrow(cumBiomassTBL), ncol = 5)
+cumFishedBiomassQuantilesTBL <- matrix(nrow = nrow(cumBiomassTBL), ncol = 5)
 
 i = 1
 for(i in 1:nrow(cumBiomassTBL)) {
   cumStatusQuoBiomassQuantilesTBL[i,] <- unname(quantile(x = cumStatusQuoBiomassSamplesTBL[i,], probs = c(0.025, 0.25, 0.5, 0.75, 0.975)))
   cumFishedBiomassQuantilesTBL[i,] <- unname(quantile(x = cumFishedBiomassSamplesTBL[i,], probs = c(0.025, 0.25, 0.5, 0.75, 0.975)))
 }
-  
+
+cumStatusQuoBiomassQuantilesTBL <- as.data.frame(cumStatusQuoBiomassQuantilesTBL)
+cumFishedBiomassQuantilesTBL <- as.data.frame(cumFishedBiomassQuantilesTBL)
+
 colnames(cumStatusQuoBiomassQuantilesTBL) <- c("CumStatusQuoBiomassCompStatusQuo_025Quant",
                                                "CumStatusQuoBiomassCompStatusQuo_25Quant",
                                                "CumStatusQuoBiomassCompStatusQuo_50Quant",
@@ -138,13 +141,13 @@ Fig1a_CumBiomassVsPerSitesFishedStatusQuoRealGainsPlot <- ggplot(data = cumBioma
               fill = gainColors["RealizedGains"]) +
   geom_segment(
     aes(y = max(CumFishedBiomassCompStatusQuo_50Quant), yend = max(CumFishedBiomassCompStatusQuo_50Quant)), x = 0, xend = 100, 
-    size = 1, 
+    linewidth = 1, 
     linetype = "dashed",
     colour = "black" 
   ) +
   geom_segment(
     y = 100, yend = 100, x = 0, xend = 100, 
-    size = 1, 
+    linewidth = 1, 
     linetype = "dashed",
     colour = "black" 
   ) +
@@ -170,11 +173,9 @@ Fig1a_CumBiomassVsPerSitesFishedStatusQuoRealGainsPlot <- ggplot(data = cumBioma
                      breaks = c(0, 20, 40, 60, 80, 100)) +
   scale_color_manual(values = manageColors,
                      labels = manageLabels,
-                     #name = "Current (status quo) management:",
                      name = NULL) +
   scale_fill_manual(values = manageColors,
                      labels = manageLabels,
-                     #name = "Current (status quo) management:",
                      name = NULL) +
   theme_bw() +
   guides(color = "none", fill = "none") +
@@ -192,7 +193,7 @@ Fig1a_CumBiomassVsPerSitesFishedStatusQuoRealGainsPlot <- ggplot(data = cumBioma
     aes(x = 80, y = max(CumFishedBiomassCompStatusQuo_50Quant)), xend = 80, yend = 100,
     lineend = "round", 
     linejoin = "round",
-    size = 1, 
+    linewidth = 1, 
     arrow = arrow(length = unit(0.3, "cm")),
     colour = "black" 
   ) +
@@ -201,7 +202,7 @@ Fig1a_CumBiomassVsPerSitesFishedStatusQuoRealGainsPlot <- ggplot(data = cumBioma
     aes(x = 59, y = 67, xend = 64, yend = 62),
     lineend = "round", 
     linejoin = "round",
-    size = 1, 
+    linewidth = 1, 
     arrow = arrow(length = unit(0.3, "cm")),
     colour = "black" 
   ) + 
@@ -211,7 +212,7 @@ Fig1a_CumBiomassVsPerSitesFishedStatusQuoRealGainsPlot <- ggplot(data = cumBioma
     aes(x = 80, y = 50, xend = 75, yend = 59),
     lineend = "round", 
     linejoin = "round",
-    size = 1, 
+    linewidth = 1, 
     arrow = arrow(length = unit(0.3, "cm")),
     colour = "black" 
   ) + 
