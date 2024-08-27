@@ -1,7 +1,7 @@
 ###### Caldwell et al. Code for "Protection efforts have resulted in ~10% of existing fish biomass on global coral reefs" ####
 ######  Predicts coral reef fish biomass under counterfactual scenarios and calculates fish biomass gains using best spaMM models  ####
 ######      Code author: Iain R. Caldwell
-######      Last revised: March 21, 2024
+######      Last revised: Aug. 24, 2024
 ######    1. Open the file with the best biomass spaMM results (Gamma) and the survey data
 ######    2. Loop through all of the best models and get predictions with error
 ######        a) Status quo biomass (standardizing methods, etc) 
@@ -32,7 +32,7 @@
 ######        f) potential gains (biomass and % of total status quo)
 ######        g) restricted gains (biomass and % of total status quo)
 ######    7. Save results file
-rm(list = ls()) #remove past stored objects
+#rm(list = ls()) #remove past stored objects
 options(scipen = 999) #turn off scientific notation
 set.seed(1234)
 
@@ -56,8 +56,15 @@ if(file.exists(fishPredMeanSDfilename)) {
   fishSurveyTBL <- readRDS(fishPredMeanSDfilename)
 } else {
   
-  # Open file wih fish surveys and covariates
+  # Open file with fish surveys and covariates
   fishSurveyTBL <- read_csv(file = paste0(dataDir, "Caldwelletal_RealizedPotentialGains_FishSurveysCovariates.csv"))
+  
+  #Set factor levels for Habitat, Depth categories, CensusMethod, and Management so the reference category is the most common one in the data
+  fishSurveyTBL <- fishSurveyTBL %>% 
+    mutate(Habitat = factor(Habitat, levels = c("Slope", "Lagoon/Back reef", "Flat", "Crest")),
+           Depth = factor(Depth, levels = c("4-10m", ">10m", "0-4m")),
+           CensusMethod = factor(CensusMethod, levels  = c("Belt transect", "Distance sampling", "Point intercept")),
+           Management = factor(Management, levels = c("Fished", "Restricted", "UnfishedLow", "UnfishedHighSmallNew", "UnfishedHighBigOld")))
   
   ######    2. Loop through all of the best models and get predictions with error ####
   ######        a) Status quo biomass (standardizing methods, etc) 

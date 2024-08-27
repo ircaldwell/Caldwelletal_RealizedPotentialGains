@@ -1,7 +1,7 @@
 ###### Caldwell et al. Code for "Protection efforts have resulted in ~10% of existing fish biomass on global coral reefs" ####
 ######  Create main figures for paper ####
 ######  Code author: Iain R. Caldwell
-######  Date last revised: March 21, 2024
+######  Date last revised: Aug. 24, 2024
 ######  Main figures for paper:
 ######    Fig 1. Realized gains
 ######      a. Cumulative biomass vs. % of sites for status quo and fished scenario
@@ -720,7 +720,7 @@ gravGradientUnfishedBigOldTBL <- tibble(logGrav_NearMarket = seq(from = min(pred
          SST_skewness_2yr = mean(predictTBL$SST_skewness_2yr),
          logPAR_kurtosis_2yr = mean(predictTBL$logPAR_kurtosis_2yr))
 
-gravGradientfishedLessThan50kmTBL <- gravGradientUnfishedBigOldTBL %>% 
+gravGradientFishedTBL <- gravGradientUnfishedBigOldTBL %>% 
   mutate(Management = "Fished")
 
 gravGradientPredsTBL <- tibble(logGrav_NearMarket = as.numeric(NA),
@@ -739,14 +739,14 @@ for(i in 1:nrow(bestSpammResTBL)) {
     distinct() %>% 
     mutate(ModelNum = i,
            UnfishedBigOldLogPredMean = unname(predict(object = iterSpaMM,
-                                                   type = "link",
-                                                   binding = NA,
-                                                   newdata = gravGradientUnfishedBigOldTBL,
-                                                   re.form = NA)),
+                                                      type = "link",
+                                                      binding = NA,
+                                                      newdata = gravGradientUnfishedBigOldTBL,
+                                                      re.form = NA)),
            FishedLogPredMean = unname(predict(object = iterSpaMM,
                                            type = "link",
                                            binding = NA,
-                                           newdata = gravGradientfishedLessThan50kmTBL,
+                                           newdata = gravGradientFishedTBL,
                                            re.form = NA)))
   gravGradientPredsTBL <- rbind(gravGradientPredsTBL, iterGravGradientPredsTBL)
 }
@@ -1626,7 +1626,7 @@ FigS4a_SpatAutoPlot <- ggplot(data = spatAutoValsTBL, aes(x = DistPairs, y = Cor
                      expand = c(0,0),
                      limits = c(0,NA),
                      breaks = c(0,0.2,0.4,0.6,0.8)) +
-  geom_text(x = 100, y = 0.8, label = paste0("nu = ", nuRangeChar,
+  geom_text(x = 200, y = 0.6, label = paste0("nu = ", nuRangeChar,
                                              "\nrho = ", rhoRangeChar), hjust = 0) +
   theme(plot.background = element_blank() ,
         panel.grid.major = element_blank() ,
@@ -1980,8 +1980,6 @@ ggsave(plot = FigS6_RepresentativenessBestModelPredPlots,
 ggsave(plot = FigS6_RepresentativenessBestModelPredPlots,
        filename = paste0(plotDir, "Caldwelletal_RealizedPotentialGains_FigS6_RepresentativenessBestModelPredPlots.pdf"),
        dpi = 1000, device = "pdf", bg = "white", width = 8.5, height = 12)
-
-otherModelPreds <- setdiff(envPreds, bestModelPreds)
 
 FigS7_RepresentativenessOtherModelPredPlots <- ggpubr::ggarrange(SST_sd_2yr_ReefMaskVsSurveyDensityPlot,
                                                                  SST_kurtosis_2yr_ReefMaskVsSurveyDensityPlot,

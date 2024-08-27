@@ -1,15 +1,15 @@
 ###### Caldwell et al. Code for "Protection efforts have resulted in ~10% of existing fish biomass on global coral reefs" ####
 ######  Runs and saves the best spaMM models  ####
 ######      Author: Iain R. Caldwell
-######      Last revised: Mar 21, 2024
+######      Last revised: Aug. 24, 2024
 ######    1. Open the files with the best spaMM results (and filenames), and the fish survey data with covariates for running the models
-######    2. Change the formulas so all continuous predictors are standardized
-######    3. Run and save the standardized best models
+######    2. Run and save the standardized best models
 rm(list = ls()) #remove past stored objects
 
 ####Load packages and libraries ####
 library(tidyverse)
 library(spaMM) #to run spatial models
+library(parallel)
 
 ####  Set parameters and directories ####
 dataDir <- "../Data/"
@@ -21,25 +21,14 @@ bestSpammResTBL <- read_csv(paste0(dataDir, "Caldwelletal_RealizedPotentialGains
 # Open file wih fish surveys and covariates
 fishSurveyTBL <- read_csv(file = paste0(dataDir, "Caldwelletal_RealizedPotentialGains_FishSurveysCovariates.csv"))
 
-######    2. Change the formulas so all continuous predictors are standardized ####
-#### Set up continuous columns ####
-gravCols <- c("logGrav_NearMarket", "logGrav_NearPop")
-sstCols <- c("SST_mean_2yr", "SST_max_2yr", "SST_sd_2yr", "logSST_kurtosis_2yr", "SST_skewness_2yr")
-sstaCols <- c("SSTa_mean_2yr") 
-dhwCols <- c("logDHW_mean_2yr", "logDHW_max_2yr")
-parCols <- c("PAR_mean_2yr", "PAR_sd_2yr", "PAR_skewness_2yr", "logPAR_kurtosis_2yr")
-chlaCols <- c("logChlA_mean_2yr", "logChlA_max_2yr")
-msecCols <- c("logwave_mean")
-continuousPreds <- c(gravCols, sstCols, sstaCols, dhwCols, chlaCols, parCols, msecCols)
+#Set factor levels for Habitat, Depth categories, CensusMethod, and Management so the reference category is the most common one in the data
+fishSurveyTBL <- fishSurveyTBL %>% 
+  mutate(Habitat = factor(Habitat, levels = c("Slope", "Lagoon/Back reef", "Flat", "Crest")),
+         Depth = factor(Depth, levels = c("4-10m", ">10m", "0-4m")),
+         CensusMethod = factor(CensusMethod, levels  = c("Belt transect", "Distance sampling", "Point intercept")),
+         Management = factor(Management, levels = c("Fished", "Restricted", "UnfishedLow", "UnfishedHighSmallNew", "UnfishedHighBigOld")))
 
-contPred <- continuousPreds[1]
-for(contPred in continuousPreds) {
-  message("Added scale to ", contPred)
-  bestSpammResTBL <- bestSpammResTBL %>% 
-    mutate(Formula = gsub(pattern = contPred, replacement = paste0("scale(", contPred, ")"), x = Formula, fixed = T))
-}
-
-######    3. Run and save the standardized best models ####
+######    2. Run and save the standardized best models ####
 # Function to run and save the models
 saveSpammModelsFun <- function(i, spammFormulaDataset, spammDataset, saveDir) {
   #Run spaMM model
